@@ -29,5 +29,8 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 srun python -u main_pretrain.py \
     --config-path scripts/pretrain/cifar/ \
     --config-name simclr.yaml \
+    precision=32 \
     max_epochs=5 \
-    data.dataset=cifar10
+    data.dataset=cifar100 \
+    method_kwargs.geometric_loss=False \
+    name=simclr-cifar100

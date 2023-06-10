@@ -23,7 +23,7 @@ from solo.utils.misc import gather, get_rank
 
 
 def simclr_loss_func(
-    z: torch.Tensor, indexes: torch.Tensor, temperature: float = 0.1
+    z: torch.Tensor, indexes: torch.Tensor, temperature: float = 0.1, geometric_loss: bool = False
 ) -> torch.Tensor:
     """Computes SimCLR's loss given batch of projected features z
     from different views, a positive boolean mask of all positives and
@@ -41,7 +41,14 @@ def simclr_loss_func(
     z = F.normalize(z, dim=-1)
     gathered_z = gather(z)
 
-    sim = torch.exp(torch.einsum("if, jf -> ij", z, gathered_z) / temperature)
+    if geometric_loss:
+        epsilon = 1e-7
+        sim = torch.einsum("if, jf -> ij", z, gathered_z)
+        sim = torch.clamp(sim, -1 + epsilon, 1 - epsilon)
+        sim = -torch.acos(sim)
+        sim = torch.exp(sim / temperature)
+    else:
+        sim = torch.exp(torch.einsum("if, jf -> ij", z, gathered_z) / temperature)
 
     gathered_indexes = gather(indexes)
 

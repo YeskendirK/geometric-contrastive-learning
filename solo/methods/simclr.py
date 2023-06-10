@@ -40,6 +40,7 @@ class SimCLR(BaseMethod):
         super().__init__(cfg)
 
         self.temperature: float = cfg.method_kwargs.temperature
+        self.geometric_loss: bool = cfg.method_kwargs.geometric_loss
 
         proj_hidden_dim: int = cfg.method_kwargs.proj_hidden_dim
         proj_output_dim: int = cfg.method_kwargs.proj_output_dim
@@ -140,6 +141,7 @@ class SimCLR(BaseMethod):
             z,
             indexes=indexes,
             temperature=self.temperature,
+            geometric_loss=self.geometric_loss
         )
 
         self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)

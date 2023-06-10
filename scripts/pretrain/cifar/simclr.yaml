@@ -19,10 +19,11 @@ method_kwargs:
   proj_hidden_dim: 2048
   proj_output_dim: 256
   temperature: 0.2
+  geometric_loss: False
 data:
   dataset: cifar10 # change here for cifar100
   train_path: "./datasets"
-  val_path: "datasets/imagenet100/val"
+  val_path: "./datasets"
   format: "image_folder"
   num_workers: 4
 optimizer:
