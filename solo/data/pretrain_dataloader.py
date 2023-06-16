@@ -57,6 +57,56 @@ def dataset_with_index(DatasetClass: Type[Dataset]) -> Type[Dataset]:
     return DatasetWithIndex
 
 
+class LT_ImageFolder(Dataset):
+
+    def __init__(self, txt=None, **kwds):
+        self.txt = txt
+        '''
+        I need to change this attributes
+        Attributes:
+            classes (list): List of the class names sorted alphabetically.
+            -> I think no need to change this
+            class_to_idx (dict): Dict with items (class_name, class_index).
+            -> same here, I do not think  I need to change it
+            imgs (list): List of (image path, class_index) tuples
+            -> Then only change self.imgs
+        '''
+        self.classes = []
+        self.class_idx = {}
+
+        self.imgs = []
+        with open(txt) as f:
+            for line in f:
+                curr_img_path = os.path.join(self.root, line.split()[0])
+                curr_class_idx = int(line.split()[1])
+                item = curr_img_path, curr_class_idx
+                self.imgs.append(item)
+
+                curr_class_name = curr_img_path.split('/')[1]
+                self.class_idx[curr_class_name] = curr_class_idx
+
+        self.classes = sorted(list(self.class_idx.keys))
+        self.targets = [s[1] for s in self.imgs]
+
+
+def dataset_with_index_LT(DatasetClass: Type[Dataset]) -> Type[Dataset]:
+    """Factory for datasets that also returns the data index.
+
+    Args:
+        DatasetClass (Type[Dataset]): Dataset class to be wrapped.
+
+    Returns:
+        Type[Dataset]: dataset with index.
+    """
+
+    class DatasetWithIndex(DatasetClass):
+        def __getitem__(self, index):
+            data = super().__getitem__(index)
+            return (index, *data)
+
+    return DatasetWithIndex
+
+
 class CustomDatasetWithoutLabels(Dataset):
     def __init__(self, root, transform=None):
         self.root = Path(root)
@@ -270,7 +320,7 @@ def build_transform_pipeline(dataset, cfg):
 
 
 def prepare_n_crop_transform(
-    transforms: List[Callable], num_crops_per_aug: List[int]
+        transforms: List[Callable], num_crops_per_aug: List[int]
 ) -> NCropAugmentation:
     """Turns a single crop transformation to an N crops transformation.
 
@@ -291,13 +341,13 @@ def prepare_n_crop_transform(
 
 
 def prepare_datasets(
-    dataset: str,
-    transform: Callable,
-    train_data_path: Optional[Union[str, Path]] = None,
-    data_format: Optional[str] = "image_folder",
-    no_labels: Optional[Union[str, Path]] = False,
-    download: bool = True,
-    data_fraction: float = -1.0,
+        dataset: str,
+        transform: Callable,
+        train_data_path: Optional[Union[str, Path]] = None,
+        data_format: Optional[str] = "image_folder",
+        no_labels: Optional[Union[str, Path]] = False,
+        download: bool = True,
+        data_fraction: float = -1.0,
 ) -> Dataset:
     """Prepares the desired dataset.
 
@@ -335,12 +385,23 @@ def prepare_datasets(
             transform=transform,
         )
 
-    elif dataset in ["imagenet", "imagenet100"]:
+    elif dataset in ["imagenet"]:  # , "imagenet100"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = dataset_with_index(H5Dataset)(dataset, train_data_path, transform)
         else:
             train_dataset = dataset_with_index(ImageFolder)(train_data_path, transform)
+
+    elif dataset in ["imagenet100", "imagenet100-LT"]:  # , "cifar10-LT", "cifar100-LT", "imagenet100-LT"]:
+        # assert data_format == "image_folder"
+        if dataset == "imagenet100":
+            train_txt_file = "split/imagenet-100/ImageNet_100_train.txt"
+        elif dataset == "imagenet100-LT":
+            train_txt_file = "split/imagenet-100/imageNet_100_LT_train.txt"
+        else:
+            raise NotImplementedError
+        train_data_root = '/'.join(train_data_path.split('/')[:-1])
+        train_dataset = dataset_with_index_LT(LT_ImageFolder(txt=train_txt_file))(train_data_root, transform)
 
     elif dataset == "custom":
         if no_labels:
@@ -374,7 +435,7 @@ def prepare_datasets(
 
 
 def prepare_dataloader(
-    train_dataset: Dataset, batch_size: int = 64, num_workers: int = 4
+        train_dataset: Dataset, batch_size: int = 64, num_workers: int = 4
 ) -> DataLoader:
     """Prepares the training dataloader for pretraining.
     Args:

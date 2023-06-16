@@ -19,11 +19,12 @@ method_kwargs:
   proj_hidden_dim: 4096
   proj_output_dim: 512
   temperature: 0.2
+  geometric_loss: False
 data:
   dataset: imagenet100
-  train_path: "datasets/imagenet100/train"
-  val_path: "datasets/imagenet100/val"
-  format: "dali"
+  train_path: "/projects/0/gusr0443/data/imagenet/train"
+  val_path: "/projects/0/gusr0443/data/imagenet/val"
+  format: "image_folder"
   num_workers: 4
 optimizer:
   name: "lars"
@@ -46,7 +47,7 @@ auto_resume:
 
 # overwrite PL stuff
 max_epochs: 400
-devices: [0, 1]
+devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
