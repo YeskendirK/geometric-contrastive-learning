@@ -20,6 +20,7 @@ method_kwargs:
   proj_output_dim: 256
   queue_size: 32768
   temperature: 0.2
+  geometric_loss: False
 momentum:
   base_tau: 0.99
   final_tau: 0.999

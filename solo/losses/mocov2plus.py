@@ -22,7 +22,7 @@ import torch.nn.functional as F
 
 
 def mocov2plus_loss_func(
-    query: torch.Tensor, key: torch.Tensor, queue: torch.Tensor, temperature=0.1
+    query: torch.Tensor, key: torch.Tensor, queue: torch.Tensor, temperature=0.1, geometric_loss: bool = False
 ) -> torch.Tensor:
     """Computes MoCo's loss given a batch of queries from view 1, a batch of keys from view 2 and a
     queue of past elements.
@@ -37,9 +37,19 @@ def mocov2plus_loss_func(
     Returns:
         torch.Tensor: MoCo loss.
     """
+    if geometric_loss:
+        epsilon = 1e-7
+        pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
+        pos = torch.clamp(pos, -1 + epsilon, 1 - epsilon)
+        pos = -torch.acos(pos)
 
-    pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
-    neg = torch.einsum("nc,ck->nk", [query, queue])
+        neg = torch.einsum("nc,ck->nk", [query, queue])
+        neg = torch.clamp(neg, -1 + epsilon, 1 - epsilon)
+        neg = -torch.acos(neg)
+    else:
+        pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
+        neg = torch.einsum("nc,ck->nk", [query, queue])
+
     logits = torch.cat([pos, neg], dim=1)
     logits /= temperature
     targets = torch.zeros(query.size(0), device=query.device, dtype=torch.long)
