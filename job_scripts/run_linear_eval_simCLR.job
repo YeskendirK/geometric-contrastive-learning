@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=TrainSimCLR
+#SBATCH --job-name=Eval
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-node=1
 #SBATCH --nodes=1
@@ -28,8 +28,8 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # CIFAR-10: baseline + ours
 srun python -u main_linear.py \
     --config-path scripts/linear/cifar/ \
-    --config-name simclr.yaml \
-    pretrained_feature_extractor='trained_models/simclr/2saxzspt/simclr-cifar100-1506-2saxzspt-ep\=4.ckpt' \
+    --config-name mocov2plus.yaml \
+    pretrained_feature_extractor='trained_models/mocov2plus/s6rcjlaq/mocov2plus-cifar10-1606-s6rcjlaq-ep\=999.ckpt' \
     precision=32 \
-    data.dataset=cifar100 \
-    name=simclr-eval-cifar100
+    data.dataset=cifar10 \
+    name=mocov2plus-eval-cifar10-1706
