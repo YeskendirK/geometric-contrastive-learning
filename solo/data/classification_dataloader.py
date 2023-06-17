@@ -28,6 +28,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+from pretrain_dataloader import LT_ImageFolder
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -217,7 +218,7 @@ def prepare_datasets(
             transform=T_val,
         )
 
-    elif dataset in ["imagenet", "imagenet100", "custom"]:
+    elif dataset in ["imagenet", "custom"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = H5Dataset(dataset, train_data_path, T_train)
@@ -225,6 +226,17 @@ def prepare_datasets(
         else:
             train_dataset = ImageFolder(train_data_path, T_train)
             val_dataset = ImageFolder(val_data_path, T_val)
+    elif dataset in ["imagenet100", "imagenet100-LT"]:
+        if dataset == "imagenet100":
+            train_txt_file = "split/imagenet-100/ImageNet_100_train.txt"
+            val_txt_file = "split/imagenet-100/ImageNet_100_val.txt"
+        else:
+            train_txt_file = "split/imagenet-100/imageNet_100_LT_train.txt"
+            val_txt_file = "split/imagenet-100/ImageNet_100_val.txt"
+        train_data_root = '/'.join(train_data_path.split('/')[:-1])
+        val_data_root = '/'.join(val_data_path.split('/')[:-1])
+        train_dataset = LT_ImageFolder(txt=train_txt_file, root=train_data_root, transform=T_train)
+        val_dataset = LT_ImageFolder(txt=val_txt_file, root=val_data_root, transform=T_val)
 
     if data_fraction > 0:
         assert data_fraction < 1, "Only use data_fraction for values smaller than 1."

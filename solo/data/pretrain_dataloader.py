@@ -57,9 +57,10 @@ def dataset_with_index(DatasetClass: Type[Dataset]) -> Type[Dataset]:
     return DatasetWithIndex
 
 
-class LT_ImageFolder(Dataset):
+class LT_ImageFolder(ImageFolder):
 
     def __init__(self, txt=None, **kwds):
+        super().__init__(**kwds)
         self.txt = txt
         '''
         I need to change this attributes
@@ -85,7 +86,7 @@ class LT_ImageFolder(Dataset):
                 curr_class_name = curr_img_path.split('/')[1]
                 self.class_idx[curr_class_name] = curr_class_idx
 
-        self.classes = sorted(list(self.class_idx.keys))
+        self.classes = sorted(self.class_idx.keys())
         self.targets = [s[1] for s in self.imgs]
 
 
@@ -401,7 +402,8 @@ def prepare_datasets(
         else:
             raise NotImplementedError
         train_data_root = '/'.join(train_data_path.split('/')[:-1])
-        train_dataset = dataset_with_index_LT(LT_ImageFolder(txt=train_txt_file))(train_data_root, transform)
+        train_dataset = dataset_with_index(LT_ImageFolder)(txt=train_txt_file, root=train_data_root,
+                                                           transform=transform)
 
     elif dataset == "custom":
         if no_labels:

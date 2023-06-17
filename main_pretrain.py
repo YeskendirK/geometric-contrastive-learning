@@ -83,7 +83,9 @@ def main(cfg: DictConfig):
         val_loader = None
     elif cfg.data.dataset in ["imagenet100", "imagenet"] and cfg.data.val_path is None:
         val_loader = None
+        print("DEBUG YK: val_loader = None")
     else:
+        print("DEBUG YK: val_data_path = ", cfg.data.val_path)
         if cfg.data.format == "dali":
             val_data_format = "image_folder"
         else:
@@ -250,6 +252,7 @@ def main(cfg: DictConfig):
     if cfg.data.format == "dali":
         trainer.fit(model, ckpt_path=ckpt_path, datamodule=dali_datamodule)
     else:
+        print("DEBUG YK: val_loader = ", val_loader)
         trainer.fit(model, train_loader, val_loader, ckpt_path=ckpt_path)
 
 
