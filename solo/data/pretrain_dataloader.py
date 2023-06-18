@@ -29,7 +29,8 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
-from torchvision.datasets import STL10, ImageFolder
+from torchvision.datasets import STL10, ImageFolder, CIFAR10, CIFAR100
+import numpy as np
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -90,22 +91,28 @@ class LT_ImageFolder(ImageFolder):
         self.targets = [s[1] for s in self.imgs]
 
 
-def dataset_with_index_LT(DatasetClass: Type[Dataset]) -> Type[Dataset]:
-    """Factory for datasets that also returns the data index.
+class CustomCIFAR10(CIFAR10):
+    def __init__(self, sublist, **kwds):
+        super().__init__(**kwds)
 
-    Args:
-        DatasetClass (Type[Dataset]): Dataset class to be wrapped.
+        if len(sublist) > 0:
+            self.data = self.data[sublist]
+            self.targets = np.array(self.targets)[sublist].tolist()
 
-    Returns:
-        Type[Dataset]: dataset with index.
-    """
+        self.idxsPerClass = [np.where(np.array(self.targets) == idx)[0] for idx in range(10)]
+        self.idxsNumPerClass = [len(idxs) for idxs in self.idxsPerClass]
 
-    class DatasetWithIndex(DatasetClass):
-        def __getitem__(self, index):
-            data = super().__getitem__(index)
-            return (index, *data)
+class CustomCIFAR100(CIFAR100):
+    def __init__(self, sublist, **kwds):
+        super().__init__(**kwds)
+        self.txt = sublist
 
-    return DatasetWithIndex
+        if len(sublist) > 0:
+            self.data = self.data[sublist]
+            self.targets = np.array(self.targets)[sublist].tolist()
+
+        self.idxsPerClass = [np.where(np.array(self.targets) == idx)[0] for idx in range(100)]
+        self.idxsNumPerClass = [len(idxs) for idxs in self.idxsPerClass]
 
 
 class CustomDatasetWithoutLabels(Dataset):
@@ -257,6 +264,8 @@ def build_transform_pipeline(dataset, cfg):
     MEANS_N_STD = {
         "cifar10": ((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
         "cifar100": ((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
+        "cifar10-LT": ((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
+        "cifar100-LT": ((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
         "stl10": ((0.4914, 0.4823, 0.4466), (0.247, 0.243, 0.261)),
         "imagenet100": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
         "imagenet": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
@@ -349,6 +358,7 @@ def prepare_datasets(
         no_labels: Optional[Union[str, Path]] = False,
         download: bool = True,
         data_fraction: float = -1.0,
+        trainSplit: Optional[str] = "'split1_D_i'",
 ) -> Dataset:
     """Prepares the desired dataset.
 
@@ -373,6 +383,30 @@ def prepare_datasets(
         DatasetClass = vars(torchvision.datasets)[dataset.upper()]
         train_dataset = dataset_with_index(DatasetClass)(
             train_data_path,
+            train=True,
+            download=download,
+            transform=transform,
+        )
+
+    elif dataset == 'cifar10-LT':
+        trainSplit = f'cifar10_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR10
+        train_dataset = dataset_with_index(DatasetClass)(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=transform,
+        )
+
+    elif dataset == 'cifar100-LT':
+        trainSplit = f'cifar100_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR100
+        train_dataset = dataset_with_index(DatasetClass)(
+            train_idx,
+            root=train_data_path,
             train=True,
             download=download,
             transform=transform,

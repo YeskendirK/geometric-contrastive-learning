@@ -28,7 +28,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
-from pretrain_dataloader import LT_ImageFolder
+from .pretrain_dataloader import LT_ImageFolder
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -138,6 +138,9 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         "imagenet100": imagenet_pipeline,
         "imagenet": imagenet_pipeline,
         "custom": custom_pipeline,
+        "cifar10-LT": cifar_pipeline,
+        "cifar100-LT": cifar_pipeline,
+        "imagenet100-LT": imagenet_pipeline,
     }
 
     assert dataset in pipelines
@@ -186,9 +189,15 @@ def prepare_datasets(
         sandbox_folder = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         val_data_path = sandbox_folder / "datasets"
 
-    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom"]
+    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom", "cifar10-LT",
+                       "cifar100-LT", "imagenet-LT"]
 
-    if dataset in ["cifar10", "cifar100"]:
+    if dataset in ["cifar10", "cifar100", "cifar10-LT", "cifar100-LT"]:
+        # for linear evaluation use standard dataset
+        if dataset == "cifar10-LT":
+            dataset = "cifar10"
+        elif dataset == "cifar100-LT":
+            dataset = "cifar100"
         DatasetClass = vars(torchvision.datasets)[dataset.upper()]
         train_dataset = DatasetClass(
             train_data_path,
