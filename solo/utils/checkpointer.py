@@ -23,21 +23,32 @@ import random
 import string
 import time
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import Callback
 from solo.utils.misc import omegaconf_select
+# from pytorch_lightning.utilities import rank_zero_info
+# import torch
+# from copy import deepcopy
+#
+# from torchmetrics import Metric
+# _NUMBER = Union[int, float]
+# _METRIC = Union[Metric, torch.Tensor, _NUMBER]
 
 
 class Checkpointer(Callback):
     def __init__(
-        self,
-        cfg: DictConfig,
-        logdir: Union[str, Path] = Path("trained_models"),
-        frequency: int = 1,
-        keep_prev: bool = False,
+            self,
+            cfg: DictConfig,
+            logdir: Union[str, Path] = Path("trained_models"),
+            frequency: int = 1,
+            keep_prev: bool = False,
+            # save_best: bool = False,
+            # mode: str = 'min',
+            # monitor: str = 'val_loss',
+            # verbose: bool = False,
     ):
         """Custom checkpointer callback that stores checkpoints in an easier to access way.
 
@@ -56,6 +67,12 @@ class Checkpointer(Callback):
         self.logdir = Path(logdir)
         self.frequency = frequency
         self.keep_prev = keep_prev
+        # self.save_best = save_best
+        # self.mode = mode
+        # self.monitor = monitor
+        # self.verbose = verbose
+        # self.best_score = None
+        # self.current_score = None
 
     @staticmethod
     def add_and_assert_specific_cfg(cfg: DictConfig) -> DictConfig:
@@ -73,6 +90,10 @@ class Checkpointer(Callback):
         cfg.checkpoint.dir = omegaconf_select(cfg, "checkpoint.dir", default="trained_models")
         cfg.checkpoint.frequency = omegaconf_select(cfg, "checkpoint.frequency", default=1)
         cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.keep_prev", default=False)
+        # cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.save_best", default=False)
+        # cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.mode", default='min')
+        # cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.monitor", default='val_loss')
+        # cfg.checkpoint.keep_prev = omegaconf_select(cfg, "checkpoint.verbose", default=False)
 
         return cfg
 
@@ -165,3 +186,34 @@ class Checkpointer(Callback):
         epoch = trainer.current_epoch  # type: ignore
         if epoch % self.frequency == 0:
             self.save(trainer)
+        #
+        # global_step = trainer.global_step
+        # monitor_candidates = self._monitor_candidates(trainer, epoch=epoch, step=global_step)
+        # current = monitor_candidates.get(self.monitor)
+        # if not isinstance(current, torch.Tensor):
+        #     rank_zero_warn(
+        #         f"{current} is supposed to be a `torch.Tensor`. Saving checkpoint may not work correctly."
+        #         f" HINT: check the value of {self.monitor} in your validation loop",
+        #         RuntimeWarning,
+        #     )
+        #     current = torch.tensor(current)
+        # monitor_op = {"min": torch.lt, "max": torch.gt}[self.mode]
+        # should_update_best_and_save = monitor_op(current, self.best_score) if self.best_score is not None else True
+        # if should_update_best_and_save:
+        #     self.best_score = current
+        #
+        # if epoch % self.frequency == 0:
+        #     if self.save_best and should_update_best_and_save:
+        #         self.save(trainer)
+        #         if self.verbose:
+        #             rank_zero_info(
+        #                 f"Epoch {epoch:d}, global step {step:d}: {self.monitor} reached {current:0.5f}"
+        #                 f' (best {self.best_model_score:0.5f}), saving model to "{filepath}" as top {k}'
+        #             )
+        #     else:
+        #         self.save(trainer)
+
+    # def _monitor_candidates(self, trainer: "pl.Trainer", epoch: int, step: int) -> Dict[str, _METRIC]:
+    #     monitor_candidates = deepcopy(trainer.callback_metrics)
+    #     monitor_candidates.update(epoch=epoch, step=step)
+    #     return monitor_candidates

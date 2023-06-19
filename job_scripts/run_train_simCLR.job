@@ -30,8 +30,7 @@ srun python -u main_pretrain.py \
     --config-path scripts/pretrain/cifar/ \
     --config-name simclr.yaml \
     precision=32 \
-    max_epochs=2 \
+    max_epochs=10 \
     data.dataset=cifar10-LT \
     method_kwargs.geometric_loss=False \
-    name=simclr-debug-cifar10-LT-1906 \
-    data.trainSplit=split1_D_i
+    name=debug-simclr-cifar10-LT-1906 \
