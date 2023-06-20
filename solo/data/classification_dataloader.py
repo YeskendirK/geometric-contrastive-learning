@@ -28,7 +28,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
-from .pretrain_dataloader import LT_ImageFolder
+from .pretrain_dataloader import LT_ImageFolder, CustomCIFAR100, CustomCIFAR10, dataset_with_index
+import numpy as np
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -161,6 +162,7 @@ def prepare_datasets(
     data_format: Optional[str] = "image_folder",
     download: bool = True,
     data_fraction: float = -1.0,
+    trainSplit: Optional[str] = "split1_D_i",
 ) -> Tuple[Dataset, Dataset]:
     """Prepares train and val datasets.
 
@@ -192,12 +194,12 @@ def prepare_datasets(
     assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom", "cifar10-LT",
                        "cifar100-LT", "imagenet-LT"]
 
-    if dataset in ["cifar10", "cifar100", "cifar10-LT", "cifar100-LT"]:
+    if dataset in ["cifar10", "cifar100"]: #, "cifar10-LT", "cifar100-LT"]:
         # for linear evaluation use standard dataset
-        if dataset == "cifar10-LT":
-            dataset = "cifar10"
-        elif dataset == "cifar100-LT":
-            dataset = "cifar100"
+        # if dataset == "cifar10-LT":
+        #     dataset = "cifar10"
+        # elif dataset == "cifar100-LT":
+        #     dataset = "cifar100"
         DatasetClass = vars(torchvision.datasets)[dataset.upper()]
         train_dataset = DatasetClass(
             train_data_path,
@@ -206,6 +208,45 @@ def prepare_datasets(
             transform=T_train,
         )
 
+        val_dataset = DatasetClass(
+            val_data_path,
+            train=False,
+            download=download,
+            transform=T_val,
+        )
+
+    elif dataset == 'cifar10-LT':
+        trainSplit = f'cifar10_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR10
+        train_dataset = DatasetClass(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=T_train,
+        )
+        DatasetClass = torchvision.datasets.CIFAR10
+        val_dataset = DatasetClass(
+            val_data_path,
+            train=False,
+            download=download,
+            transform=T_val,
+        )
+
+    elif dataset == 'cifar100-LT':
+        trainSplit = f'cifar100_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR100
+        train_dataset = DatasetClass(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=T_train,
+        )
+
+        DatasetClass = torchvision.datasets.CIFAR100
         val_dataset = DatasetClass(
             val_data_path,
             train=False,
@@ -305,6 +346,7 @@ def prepare_data(
     download: bool = True,
     data_fraction: float = -1.0,
     auto_augment: bool = False,
+    trainSplit: Optional[str] = "split1_D_i",
 ) -> Tuple[DataLoader, DataLoader]:
     """Prepares transformations, creates dataset objects and wraps them in dataloaders.
 
@@ -351,6 +393,7 @@ def prepare_data(
         data_format=data_format,
         download=download,
         data_fraction=data_fraction,
+        trainSplit=trainSplit
     )
     train_loader, val_loader = prepare_dataloaders(
         train_dataset,

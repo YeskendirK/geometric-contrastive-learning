@@ -28,8 +28,8 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # CIFAR-10: baseline + ours
 srun python -u main_linear.py \
     --config-path scripts/linear/cifar/ \
-    --config-name mocov2plus.yaml \
-    pretrained_feature_extractor='trained_models/mocov2plus/s6rcjlaq/mocov2plus-cifar10-1606-s6rcjlaq-ep\=999.ckpt' \
+    --config-name simclr.yaml \
+    pretrained_feature_extractor='trained_models/simclr/trppewq1/simclr-cifar10-LT-1906-trppewq1-ep\=999.ckpt' \
     precision=32 \
-    data.dataset=cifar10 \
-    name=mocov2plus-eval-cifar10-1706
+    data.dataset=cifar10-LT \
+    name=simclr-eval-cifar10-LT-2006

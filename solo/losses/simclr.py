@@ -20,6 +20,7 @@
 import torch
 import torch.nn.functional as F
 from solo.utils.misc import gather, get_rank
+import numpy as np
 
 
 def simclr_loss_func(

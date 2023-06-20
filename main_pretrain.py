@@ -96,6 +96,7 @@ def main(cfg: DictConfig):
             data_format=val_data_format,
             batch_size=cfg.optimizer.batch_size,
             num_workers=cfg.data.num_workers,
+            trainSplit=cfg.data.trainSplit
         )
 
     # pretrain dataloader
