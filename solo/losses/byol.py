@@ -21,7 +21,7 @@ import torch
 import torch.nn.functional as F
 
 
-def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True) -> torch.Tensor:
+def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True, geometric_loss: bool = False) -> torch.Tensor:
     """Computes BYOL's loss given batch of predicted features p and projected momentum features z.
 
     Args:
@@ -32,11 +32,18 @@ def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True) ->
     Returns:
         torch.Tensor: BYOL's loss.
     """
+    if geometric_loss:
+        p = F.normalize(p, dim=-1)
+        z = F.normalize(z, dim=-1)
+        sim = p * z.detach()
+        sim = torch.clamp(sim, -1 + epsilon, 1 - epsilon)
+        sim = -torch.acos(sim)
+        return 2 - 2 * sim.sum(dim=1).mean()
+    else:
+        if simplified:
+            return 2 - 2 * F.cosine_similarity(p, z.detach(), dim=-1).mean()
 
-    if simplified:
-        return 2 - 2 * F.cosine_similarity(p, z.detach(), dim=-1).mean()
+        p = F.normalize(p, dim=-1)
+        z = F.normalize(z, dim=-1)
 
-    p = F.normalize(p, dim=-1)
-    z = F.normalize(z, dim=-1)
-
-    return 2 - 2 * (p * z.detach()).sum(dim=1).mean()
+        return 2 - 2 * (p * z.detach()).sum(dim=1).mean()
