@@ -27,13 +27,14 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # Run your code
 # CIFAR-10: baseline + ours
 srun python3 main_knn.py \
-    --dataset cifar100 \
-    --train_data_path ./datasets \
-    --val_data_path ./datasets \
+    --config-path scripts/linear/cifar/ \
+    --config-name simclr.yaml \
+    data.dataset cifar100 \
     --batch_size 16 \
     --num_workers 10 \
-    --pretrained_checkpoint_dir 'trained_models/simclr/2saxzspt/simclr-cifar100-1506-2saxzspt-ep\=4.ckpt' \
+    --pretrained_checkpoint_dir 'trained_models/simclr/2saxzspt' \
     --k 1 10 \
     --temperature 0.2 \
     --feature_type projector \
-    --distance_function euclidean
+    --distance_function euclidean \
+    --trainSplit 'split1_D_i'

@@ -29,6 +29,7 @@ data:
   val_path: "./datasets"
   format: "image_folder"
   num_workers: 4
+  trainSplit: 'split1_D_i' # cifar100_split1_D_i
 optimizer:
   name: "lars"
   batch_size: 256

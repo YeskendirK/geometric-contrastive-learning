@@ -29,6 +29,7 @@ data:
   val_path: "./datasets/imagenet-100/val"
   format: "dali"
   num_workers: 4
+  trainSplit: 'split1_D_i'
 optimizer:
   name: "sgd"
   batch_size: 128

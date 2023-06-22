@@ -20,6 +20,7 @@ def parse_args_knn() -> argparse.Namespace:
     parser.add_argument("--temperature", type=float, nargs="+")
     parser.add_argument("--distance_function", type=str, nargs="+")
     parser.add_argument("--feature_type", type=str, nargs="+")
+    parser.add_argument("--trainSplit", type=str, default='split1_D_i')
 
     # add shared arguments
     dataset_args(parser)

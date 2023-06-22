@@ -36,6 +36,9 @@ from solo.data.classification_dataloader import (
 from solo.methods import METHODS
 from solo.utils.knn import WeightedKNNClassifier
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
+
 
 @torch.no_grad()
 def extract_features(loader: DataLoader, model: nn.Module) -> Tuple[torch.Tensor]:
@@ -114,8 +117,14 @@ def run_knn(
 
     return acc1, acc5
 
+@hydra.main(version_base="1.2")
+def main(cfg: DictConfig):
+    # hydra doesn't allow us to add new keys for "safety"
+    # set_struct(..., False) disables this behavior and allows us to add more parameters
+    # without making the user specify every single thing about the model
+    OmegaConf.set_struct(cfg, False)
+    cfg = parse_cfg(cfg)
 
-def main():
     args = parse_args_knn()
 
     # build paths
@@ -127,11 +136,21 @@ def main():
     with open(args_path) as f:
         method_args = json.load(f)
 
+    cfg = OmegaConf.create(method_args)
+    model = METHODS[cfg.method](cfg)
+    state = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+    model.load_state_dict(state, strict=False)
+    model.cuda()
+
+
+
+    '''
     # build the model
     model = METHODS[method_args["method"]].load_from_checkpoint(
         ckpt_path, strict=False, **method_args
     )
     model.cuda()
+    '''
 
     # prepare data
     _, T = prepare_transforms(args.dataset)
@@ -142,6 +161,7 @@ def main():
         train_data_path=args.train_data_path,
         val_data_path=args.val_data_path,
         data_format=args.data_format,
+        trainSplit=args.trainSplit
     )
     train_loader, val_loader = prepare_dataloaders(
         train_dataset,

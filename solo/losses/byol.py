@@ -33,6 +33,7 @@ def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True, ge
         torch.Tensor: BYOL's loss.
     """
     if geometric_loss:
+        epsilon = 1e-7
         p = F.normalize(p, dim=-1)
         z = F.normalize(z, dim=-1)
         sim = p * z.detach()
