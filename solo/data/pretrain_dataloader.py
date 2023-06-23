@@ -420,7 +420,7 @@ def prepare_datasets(
             transform=transform,
         )
 
-    elif dataset in ["imagenet"]:  # , "imagenet100"]:
+    elif dataset in ["imagenet", "imagenet10"]:  # , "imagenet100"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = dataset_with_index(H5Dataset)(dataset, train_data_path, transform)

@@ -1,5 +1,6 @@
 defaults:
   - _self_
+  - augmentations: wmse.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -10,26 +11,29 @@ hydra:
   run:
     dir: .
 
-name: "mocov2plus-cifar10-linear" # or "mocov2plus-cifar100-linear"
-pretrained_feature_extractor: None
+name: "wmse-imagenet100"
+method: "wmse"
 backbone:
   name: "resnet18"
-pretrain_method: "mocov2plus"
+method_kwargs:
+  proj_hidden_dim: 1024
+  proj_output_dim: 64
+  whitening_size: 128
 data:
-  dataset: cifar10 # change here for cifar100
-  train_path: "./datasets"
-  val_path: "./datasets"
-  format: "image_folder"
+  dataset: imagenet100
+  train_path: "datasets/imagenet100/train"
+  val_path: "datasets/imagenet100/val"
+  format: "dali"
   num_workers: 4
-  trainSplit: 'split1_D_i' # cifar100_split1_D_i
 optimizer:
-  name: "sgd"
-  batch_size: 256
-  lr: 3.0
-  weight_decay: 0
+  name: "adam"
+  batch_size: 128
+  lr: 2e-3
+  classifier_lr: 3e-3
+  weight_decay: 1e-6
 scheduler:
-  name: "step"
-  lr_decay_steps: [60, 80]
+  name: "warmup_cosine"
+  warmup_start_lr: 0
 checkpoint:
   enabled: True
   dir: "trained_models"
@@ -38,8 +42,8 @@ auto_resume:
   enabled: True
 
 # overwrite PL stuff
-max_epochs: 100
-devices: [0]
+max_epochs: 400
+devices: [0, 1]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"

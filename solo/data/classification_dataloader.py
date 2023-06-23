@@ -142,6 +142,7 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         "cifar10-LT": cifar_pipeline,
         "cifar100-LT": cifar_pipeline,
         "imagenet100-LT": imagenet_pipeline,
+        "imagenet10": imagenet_pipeline,
     }
 
     assert dataset in pipelines
@@ -191,7 +192,7 @@ def prepare_datasets(
         sandbox_folder = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         val_data_path = sandbox_folder / "datasets"
 
-    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom", "cifar10-LT",
+    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "imagenet10", "custom", "cifar10-LT",
                        "cifar100-LT", "imagenet-LT"]
 
     if dataset in ["cifar10", "cifar100"]: #, "cifar10-LT", "cifar100-LT"]:
@@ -268,7 +269,7 @@ def prepare_datasets(
             transform=T_val,
         )
 
-    elif dataset in ["imagenet", "custom"]:
+    elif dataset in ["imagenet", "imagenet10", "custom"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = H5Dataset(dataset, train_data_path, T_train)

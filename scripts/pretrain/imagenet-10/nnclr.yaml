@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - augmentations: symmetric_weak.yaml
+  - augmentations: asymmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,32 +11,32 @@ hydra:
   run:
     dir: .
 
-name: "mocov2plus-cifar10" # change here for cifar100
-method: "mocov2plus"
+name: "nnclr-imagenet100"
+method: "nnclr"
 backbone:
   name: "resnet18"
 method_kwargs:
-  proj_hidden_dim: 2048
-  proj_output_dim: 256
-  queue_size: 4096
   temperature: 0.2
-  geometric_loss: False
-momentum:
-  base_tau: 0.99
-  final_tau: 0.999
+  proj_hidden_dim: 2048
+  pred_hidden_dim: 4096
+  proj_output_dim: 256
+  queue_size: 65536
 data:
-  dataset: cifar10 # change here for cifar100
-  train_path: "./datasets"
-  val_path: "./datasets"
-  format: "image_folder"
+  dataset: imagenet100
+  train_path: "./datasets/imagenet-100/train"
+  val_path: "./datasets/imagenet-100/val"
+  format: "dali"
   num_workers: 4
-  trainSplit: 'split1_D_i' # cifar100_split1_D_i
 optimizer:
-  name: "sgd"
-  batch_size: 256
-  lr: 0.3
-  classifier_lr: 0.3
-  weight_decay: 1e-4
+  name: "lars"
+  batch_size: 128
+  lr: 0.4
+  classifier_lr: 0.1
+  weight_decay: 1e-5
+  kwargs:
+    clip_lr: True
+    eta: 0.02
+    exclude_bias_n_norm: True
 scheduler:
   name: "warmup_cosine"
 checkpoint:
@@ -47,8 +47,8 @@ auto_resume:
   enabled: True
 
 # overwrite PL stuff
-max_epochs: 1000
-devices: [0]
+max_epochs: 400
+devices: [0, 1]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"

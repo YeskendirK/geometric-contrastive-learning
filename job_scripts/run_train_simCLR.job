@@ -27,10 +27,9 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # Run your code
 # CIFAR-10: baseline + ours
 srun python -u main_pretrain.py \
-    --config-path scripts/pretrain/cifar/ \
+    --config-path scripts/pretrain/imagenet-10 \
     --config-name simclr.yaml \
     precision=32 \
-    data.dataset=cifar10-LT \
+    data.dataset=imagenet10 \
     method_kwargs.geometric_loss=False \
-    data.trainSplit='cifar100_split1_D_i' \
-    name=debug-simclr-cifar100-LT-2006 \
+    name=simclr-dog_imagenet10-2306 \
