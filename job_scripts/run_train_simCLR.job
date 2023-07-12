@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --mem=122880M
 #SBATCH --output=job_logs/slurm_output_%A.out
 
@@ -27,9 +27,14 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # Run your code
 # CIFAR-10: baseline + ours
 srun python -u main_pretrain.py \
-    --config-path scripts/pretrain/imagenet-10 \
+    --config-path scripts/pretrain/imagenet-100 \
     --config-name simclr.yaml \
+    data.num_workers=16 \
+    max_epochs=400 \
     precision=32 \
-    data.dataset=imagenet10 \
+    data.dataset=imagenet100-LT \
+    method_kwargs.temperature=0.1 \
+    optimizer.batch_size=512 \
+    method_kwargs.proj_output_dim=128 \
     method_kwargs.geometric_loss=False \
-    name=simclr-dog_imagenet10-2306 \
+    name=simclr-Imagenet100-1207 \

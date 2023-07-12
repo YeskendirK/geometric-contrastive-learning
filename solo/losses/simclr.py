@@ -46,7 +46,7 @@ def simclr_loss_func(
         epsilon = 1e-7
         sim = torch.einsum("if, jf -> ij", z, gathered_z)
         sim = torch.clamp(sim, -1 + epsilon, 1 - epsilon)
-        sim = -torch.acos(sim)
+        sim = 1-torch.acos(sim)/np.pi
         sim = torch.exp(sim / temperature)
     else:
         sim = torch.exp(torch.einsum("if, jf -> ij", z, gathered_z) / temperature)

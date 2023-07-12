@@ -77,18 +77,20 @@ class LT_ImageFolder(ImageFolder):
         self.class_idx = {}
 
         self.imgs = []
+        self.samples = []
         with open(txt) as f:
             for line in f:
                 curr_img_path = os.path.join(self.root, line.split()[0])
                 curr_class_idx = int(line.split()[1])
                 item = curr_img_path, curr_class_idx
-                self.imgs.append(item)
+                self.samples.append(item)
 
-                curr_class_name = curr_img_path.split('/')[1]
+                curr_class_name = curr_img_path.split('/')[-2]
                 self.class_idx[curr_class_name] = curr_class_idx
 
         self.classes = sorted(self.class_idx.keys())
         self.targets = [s[1] for s in self.imgs]
+        self.imgs = self.samples
 
 
 class CustomCIFAR10(CIFAR10):

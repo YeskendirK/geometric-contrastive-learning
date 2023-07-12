@@ -19,6 +19,7 @@
 
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 
 def mocov2plus_loss_func(
@@ -41,11 +42,11 @@ def mocov2plus_loss_func(
         epsilon = 1e-7
         pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
         pos = torch.clamp(pos, -1 + epsilon, 1 - epsilon)
-        pos = -torch.acos(pos)
+        pos = 1-torch.acos(pos)/np.pi
 
         neg = torch.einsum("nc,ck->nk", [query, queue])
         neg = torch.clamp(neg, -1 + epsilon, 1 - epsilon)
-        neg = -torch.acos(neg)
+        neg = 1-torch.acos(neg)/np.pi
     else:
         pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
         neg = torch.einsum("nc,ck->nk", [query, queue])

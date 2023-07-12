@@ -3,6 +3,7 @@
 scripts/.DS_Store
 scripts/linear/.DS_Store
 .ipynb_checkpoints/
+scripts/linear/.DS_Store
 
 # tensorboard dir
 runs/

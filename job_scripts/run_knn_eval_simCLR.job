@@ -27,9 +27,9 @@ export WANDB_API_KEY=24573d74417a86cadb7589d40b60f87c211632d5
 # Run your code
 # CIFAR-10: baseline + ours
 srun python3 main_knn.py \
-    --config-path scripts/linear/cifar/ \
-    --config-name simclr.yaml \
-    data.dataset cifar100 \
+    --dataset cifar100 \
+    --train_data_path ./datasets \
+    --val_data_path ./datasets \
     --batch_size 16 \
     --num_workers 10 \
     --pretrained_checkpoint_dir 'trained_models/simclr/2saxzspt' \

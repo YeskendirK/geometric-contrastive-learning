@@ -193,7 +193,7 @@ def prepare_datasets(
         val_data_path = sandbox_folder / "datasets"
 
     assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "imagenet10", "custom", "cifar10-LT",
-                       "cifar100-LT", "imagenet-LT"]
+                       "cifar100-LT", "imagenet100-LT"]
 
     if dataset in ["cifar10", "cifar100"]: #, "cifar10-LT", "cifar100-LT"]:
         # for linear evaluation use standard dataset
@@ -277,6 +277,7 @@ def prepare_datasets(
         else:
             train_dataset = ImageFolder(train_data_path, T_train)
             val_dataset = ImageFolder(val_data_path, T_val)
+
     elif dataset in ["imagenet100", "imagenet100-LT"]:
         if dataset == "imagenet100":
             train_txt_file = "split/imagenet-100/ImageNet_100_train.txt"

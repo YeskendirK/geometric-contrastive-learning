@@ -32,6 +32,7 @@ from solo.data.classification_dataloader import (
     prepare_dataloaders,
     prepare_datasets,
     prepare_transforms,
+    prepare_data
 )
 from solo.methods import METHODS
 from solo.utils.knn import WeightedKNNClassifier
@@ -117,13 +118,12 @@ def run_knn(
 
     return acc1, acc5
 
-@hydra.main(version_base="1.2")
 def main(cfg: DictConfig):
     # hydra doesn't allow us to add new keys for "safety"
     # set_struct(..., False) disables this behavior and allows us to add more parameters
     # without making the user specify every single thing about the model
-    OmegaConf.set_struct(cfg, False)
-    cfg = parse_cfg(cfg)
+    # OmegaConf.set_struct(cfg, False)
+    # cfg = parse_cfg(cfg)
 
     args = parse_args_knn()
 
@@ -153,6 +153,7 @@ def main(cfg: DictConfig):
     '''
 
     # prepare data
+    '''
     _, T = prepare_transforms(args.dataset)
     train_dataset, val_dataset = prepare_datasets(
         args.dataset,
@@ -169,6 +170,14 @@ def main(cfg: DictConfig):
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
+    '''
+    train_loader, val_loader = prepare_data(args.dataset,
+            train_data_path=args.train_data_path,
+            val_data_path=args.val_data_path,
+            data_format=args.data_format,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            trainSplit=args.trainSplit)
 
     # extract train features
     train_features_bb, train_features_proj, train_targets = extract_features(train_loader, model)
