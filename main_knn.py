@@ -118,7 +118,7 @@ def run_knn(
 
     return acc1, acc5
 
-def main(cfg: DictConfig):
+def main():
     # hydra doesn't allow us to add new keys for "safety"
     # set_struct(..., False) disables this behavior and allows us to add more parameters
     # without making the user specify every single thing about the model

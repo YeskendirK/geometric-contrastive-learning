@@ -39,7 +39,7 @@ def mocov2plus_loss_func(
         torch.Tensor: MoCo loss.
     """
     if geometric_loss:
-        epsilon = 1e-7
+        epsilon = 1e-6
         pos = torch.einsum("nc,nc->n", [query, key]).unsqueeze(-1)
         pos = torch.clamp(pos, -1 + epsilon, 1 - epsilon)
         pos = 1-torch.acos(pos)/np.pi

@@ -460,6 +460,16 @@ def prepare_datasets(
                 _,
             ) = train_test_split(files, train_size=data_fraction, random_state=42)
             train_dataset.images = files
+        elif dataset in ["cifar10", "cifar100"]:
+            # data = train_dataset.train_list
+            files = train_dataset.data #[f for f, _ in data]
+            labels = train_dataset.targets #[l for _, l in data]
+            files, _, labels, _ = train_test_split(
+                files, labels, train_size=data_fraction, stratify=labels, random_state=42
+            )
+            train_dataset.data = files
+            train_dataset.targets = labels
+            # train_dataset.train_list = [tuple(p) for p in zip(files, labels)]
         else:
             data = train_dataset.samples
             files = [f for f, _ in data]

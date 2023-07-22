@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=20:00:00
+#SBATCH --time=7:00:00
 #SBATCH --mem=122880M
 #SBATCH --output=job_logs/slurm_output_%A.out
 
@@ -30,11 +30,12 @@ srun python -u main_pretrain.py \
     --config-path scripts/pretrain/imagenet-100 \
     --config-name simclr.yaml \
     data.num_workers=16 \
-    max_epochs=400 \
+    max_epochs=1000 \
     precision=32 \
-    data.dataset=imagenet100-LT \
-    method_kwargs.temperature=0.1 \
+    data.dataset=imagenet100 \
+    method_kwargs.temperature=0.05 \
     optimizer.batch_size=512 \
     method_kwargs.proj_output_dim=128 \
-    method_kwargs.geometric_loss=False \
-    name=simclr-Imagenet100-1207 \
+    method_kwargs.geometric_loss=True \
+    augmentations=symmetric_small.yaml \
+    name=simclr-CF100-smallAug-1207 \
