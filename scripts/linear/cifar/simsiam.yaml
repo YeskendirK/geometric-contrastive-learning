@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - augmentations: asymmetric.yaml
   - wandb: private.yaml
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
@@ -11,37 +10,26 @@ hydra:
   run:
     dir: .
 
-name: "byol-cifar10" # change here for cifar100
-method: "byol"
+name: "simsiam-cifar100-linear"
+pretrained_feature_extractor: None
 backbone:
   name: "resnet18"
-method_kwargs:
-  proj_hidden_dim: 4096
-  proj_output_dim: 256
-  pred_hidden_dim: 4096
-  geometric_loss: False
-momentum:
-  base_tau: 0.99
-  final_tau: 1.0
+pretrain_method: "simsiam"
 data:
   dataset: cifar10 # change here for cifar100
   train_path: "./datasets"
   val_path: "./datasets"
   format: "image_folder"
   num_workers: 4
-  traioptimizernSplit: 'split1_D_i' # cifar100_split1_D_i
+  trainSplit: 'split1_D_i' # cifar100_split1_D_i
 optimizer:
-  name: "lars"
+  name: "sgd"
   batch_size: 256
-  lr: 1.0
-  classifier_lr: 0.1
-  weight_decay: 1e-5
-  kwargs:
-    clip_lr: True
-    eta: 0.02
-    exclude_bias_n_norm: True
+  lr: 30.0
+  weight_decay: 0
 scheduler:
-  name: "warmup_cosine"
+  name: "step"
+  lr_decay_steps: [60, 80]
 checkpoint:
   enabled: True
   dir: "trained_models"
@@ -50,7 +38,7 @@ auto_resume:
   enabled: True
 
 # overwrite PL stuff
-max_epochs: 1000
+max_epochs: 100
 devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"

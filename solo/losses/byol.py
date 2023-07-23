@@ -19,6 +19,7 @@
 
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 
 def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True, geometric_loss: bool = False) -> torch.Tensor:
@@ -38,7 +39,7 @@ def byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True, ge
         z = F.normalize(z, dim=-1)
         sim = p * z.detach()
         sim = torch.clamp(sim, -1 + epsilon, 1 - epsilon)
-        sim = -torch.acos(sim)
+        sim = 1-torch.acos(sim)/np.pi
         return 2 - 2 * sim.sum(dim=1).mean()
     else:
         if simplified:
