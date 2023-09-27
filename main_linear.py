@@ -63,7 +63,7 @@ def main(cfg: DictConfig):
     if cfg.backbone.name.startswith("resnet"):
         # remove fc layer
         backbone.fc = nn.Identity()
-        cifar = cfg.data.dataset in ["cifar10", "cifar100"]
+        cifar = cfg.data.dataset in ["cifar10", "cifar100", "cifar10-LT", "cifar100-LT"]
         if cifar:
             backbone.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2, bias=False)
             backbone.maxpool = nn.Identity()
@@ -125,6 +125,7 @@ def main(cfg: DictConfig):
         batch_size=cfg.optimizer.batch_size,
         num_workers=cfg.data.num_workers,
         auto_augment=cfg.auto_augment,
+        trainSplit=cfg.data.trainSplit
     )
 
     if cfg.data.format == "dali":

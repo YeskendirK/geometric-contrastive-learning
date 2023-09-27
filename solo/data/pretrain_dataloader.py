@@ -29,7 +29,8 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
-from torchvision.datasets import STL10, ImageFolder
+from torchvision.datasets import STL10, ImageFolder, CIFAR10, CIFAR100
+import numpy as np
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -55,6 +56,65 @@ def dataset_with_index(DatasetClass: Type[Dataset]) -> Type[Dataset]:
             return (index, *data)
 
     return DatasetWithIndex
+
+
+class LT_ImageFolder(ImageFolder):
+
+    def __init__(self, txt=None, **kwds):
+        super().__init__(**kwds)
+        self.txt = txt
+        '''
+        I need to change this attributes
+        Attributes:
+            classes (list): List of the class names sorted alphabetically.
+            -> I think no need to change this
+            class_to_idx (dict): Dict with items (class_name, class_index).
+            -> same here, I do not think  I need to change it
+            imgs (list): List of (image path, class_index) tuples
+            -> Then only change self.imgs
+        '''
+        self.classes = []
+        self.class_idx = {}
+
+        self.imgs = []
+        self.samples = []
+        with open(txt) as f:
+            for line in f:
+                curr_img_path = os.path.join(self.root, line.split()[0])
+                curr_class_idx = int(line.split()[1])
+                item = curr_img_path, curr_class_idx
+                self.samples.append(item)
+
+                curr_class_name = curr_img_path.split('/')[-2]
+                self.class_idx[curr_class_name] = curr_class_idx
+
+        self.classes = sorted(self.class_idx.keys())
+        self.targets = [s[1] for s in self.imgs]
+        self.imgs = self.samples
+
+
+class CustomCIFAR10(CIFAR10):
+    def __init__(self, sublist, **kwds):
+        super().__init__(**kwds)
+
+        if len(sublist) > 0:
+            self.data = self.data[sublist]
+            self.targets = np.array(self.targets)[sublist].tolist()
+
+        self.idxsPerClass = [np.where(np.array(self.targets) == idx)[0] for idx in range(10)]
+        self.idxsNumPerClass = [len(idxs) for idxs in self.idxsPerClass]
+
+class CustomCIFAR100(CIFAR100):
+    def __init__(self, sublist, **kwds):
+        super().__init__(**kwds)
+        self.txt = sublist
+
+        if len(sublist) > 0:
+            self.data = self.data[sublist]
+            self.targets = np.array(self.targets)[sublist].tolist()
+
+        self.idxsPerClass = [np.where(np.array(self.targets) == idx)[0] for idx in range(100)]
+        self.idxsNumPerClass = [len(idxs) for idxs in self.idxsPerClass]
 
 
 class CustomDatasetWithoutLabels(Dataset):
@@ -206,6 +266,8 @@ def build_transform_pipeline(dataset, cfg):
     MEANS_N_STD = {
         "cifar10": ((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
         "cifar100": ((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
+        "cifar10-LT": ((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
+        "cifar100-LT": ((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
         "stl10": ((0.4914, 0.4823, 0.4466), (0.247, 0.243, 0.261)),
         "imagenet100": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
         "imagenet": (IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
@@ -270,7 +332,7 @@ def build_transform_pipeline(dataset, cfg):
 
 
 def prepare_n_crop_transform(
-    transforms: List[Callable], num_crops_per_aug: List[int]
+        transforms: List[Callable], num_crops_per_aug: List[int]
 ) -> NCropAugmentation:
     """Turns a single crop transformation to an N crops transformation.
 
@@ -291,13 +353,14 @@ def prepare_n_crop_transform(
 
 
 def prepare_datasets(
-    dataset: str,
-    transform: Callable,
-    train_data_path: Optional[Union[str, Path]] = None,
-    data_format: Optional[str] = "image_folder",
-    no_labels: Optional[Union[str, Path]] = False,
-    download: bool = True,
-    data_fraction: float = -1.0,
+        dataset: str,
+        transform: Callable,
+        train_data_path: Optional[Union[str, Path]] = None,
+        data_format: Optional[str] = "image_folder",
+        no_labels: Optional[Union[str, Path]] = False,
+        download: bool = True,
+        data_fraction: float = -1.0,
+        trainSplit: Optional[str] = "'split1_D_i'",
 ) -> Dataset:
     """Prepares the desired dataset.
 
@@ -327,6 +390,30 @@ def prepare_datasets(
             transform=transform,
         )
 
+    elif dataset == 'cifar10-LT':
+        trainSplit = f'cifar10_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR10
+        train_dataset = dataset_with_index(DatasetClass)(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=transform,
+        )
+
+    elif dataset == 'cifar100-LT':
+        trainSplit = f'cifar100_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR100
+        train_dataset = dataset_with_index(DatasetClass)(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=transform,
+        )
+
     elif dataset == "stl10":
         train_dataset = dataset_with_index(STL10)(
             train_data_path,
@@ -335,12 +422,24 @@ def prepare_datasets(
             transform=transform,
         )
 
-    elif dataset in ["imagenet", "imagenet100"]:
+    elif dataset in ["imagenet", "imagenet10"]:  # , "imagenet100"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = dataset_with_index(H5Dataset)(dataset, train_data_path, transform)
         else:
             train_dataset = dataset_with_index(ImageFolder)(train_data_path, transform)
+
+    elif dataset in ["imagenet100", "imagenet100-LT"]:  # , "cifar10-LT", "cifar100-LT", "imagenet100-LT"]:
+        # assert data_format == "image_folder"
+        if dataset == "imagenet100":
+            train_txt_file = "split/imagenet-100/ImageNet_100_train.txt"
+        elif dataset == "imagenet100-LT":
+            train_txt_file = "split/imagenet-100/imageNet_100_LT_train.txt"
+        else:
+            raise NotImplementedError
+        train_data_root = '/'.join(train_data_path.split('/')[:-1])
+        train_dataset = dataset_with_index(LT_ImageFolder)(txt=train_txt_file, root=train_data_root,
+                                                           transform=transform)
 
     elif dataset == "custom":
         if no_labels:
@@ -361,6 +460,16 @@ def prepare_datasets(
                 _,
             ) = train_test_split(files, train_size=data_fraction, random_state=42)
             train_dataset.images = files
+        elif dataset in ["cifar10", "cifar100"]:
+            # data = train_dataset.train_list
+            files = train_dataset.data #[f for f, _ in data]
+            labels = train_dataset.targets #[l for _, l in data]
+            files, _, labels, _ = train_test_split(
+                files, labels, train_size=data_fraction, stratify=labels, random_state=42
+            )
+            train_dataset.data = files
+            train_dataset.targets = labels
+            # train_dataset.train_list = [tuple(p) for p in zip(files, labels)]
         else:
             data = train_dataset.samples
             files = [f for f, _ in data]
@@ -374,7 +483,7 @@ def prepare_datasets(
 
 
 def prepare_dataloader(
-    train_dataset: Dataset, batch_size: int = 64, num_workers: int = 4
+        train_dataset: Dataset, batch_size: int = 64, num_workers: int = 4
 ) -> DataLoader:
     """Prepares the training dataloader for pretraining.
     Args:

@@ -81,7 +81,7 @@ def main(cfg: DictConfig):
     # validation dataloader for when it is available
     if cfg.data.dataset == "custom" and (cfg.data.no_labels or cfg.data.val_path is None):
         val_loader = None
-    elif cfg.data.dataset in ["imagenet100", "imagenet"] and cfg.data.val_path is None:
+    elif cfg.data.dataset in ["imagenet100", "imagenet", "imagenet10"] and cfg.data.val_path is None:
         val_loader = None
     else:
         if cfg.data.format == "dali":
@@ -96,6 +96,7 @@ def main(cfg: DictConfig):
             data_format=val_data_format,
             batch_size=cfg.optimizer.batch_size,
             num_workers=cfg.data.num_workers,
+            trainSplit=cfg.data.trainSplit
         )
 
     # pretrain dataloader
@@ -150,6 +151,7 @@ def main(cfg: DictConfig):
             data_format=cfg.data.format,
             no_labels=cfg.data.no_labels,
             data_fraction=cfg.data.fraction,
+            trainSplit=cfg.data.trainSplit
         )
         train_loader = prepare_dataloader(
             train_dataset, batch_size=cfg.optimizer.batch_size, num_workers=cfg.data.num_workers

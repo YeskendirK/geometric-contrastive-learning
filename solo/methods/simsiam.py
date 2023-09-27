@@ -65,6 +65,8 @@ class SimSiam(BaseMethod):
             nn.Linear(pred_hidden_dim, proj_output_dim),
         )
 
+        self.geometric_loss: bool = cfg.method_kwargs.geometric_loss
+
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Adds method specific default values/checks for config.
@@ -134,7 +136,8 @@ class SimSiam(BaseMethod):
         p1, p2 = out["p"]
 
         # ------- negative cosine similarity loss -------
-        neg_cos_sim = simsiam_loss_func(p1, z2) / 2 + simsiam_loss_func(p2, z1) / 2
+        neg_cos_sim = simsiam_loss_func(p1, z2, geometric_loss=self.geometric_loss) / 2 + \
+                      simsiam_loss_func(p2, z1, geometric_loss=self.geometric_loss) / 2
 
         # calculate std of features
         z1_std = F.normalize(z1, dim=-1).std(dim=0).mean()

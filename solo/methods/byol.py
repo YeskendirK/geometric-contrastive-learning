@@ -71,6 +71,8 @@ class BYOL(BaseMomentumMethod):
             nn.Linear(pred_hidden_dim, proj_output_dim),
         )
 
+        self.geometric_loss: bool = cfg.method_kwargs.geometric_loss
+
     @staticmethod
     def add_and_assert_specific_cfg(cfg: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Adds method specific default values/checks for config.
@@ -187,7 +189,7 @@ class BYOL(BaseMomentumMethod):
         neg_cos_sim = 0
         for v1 in range(self.num_large_crops):
             for v2 in np.delete(range(self.num_crops), v1):
-                neg_cos_sim += byol_loss_func(P[v2], Z_momentum[v1])
+                neg_cos_sim += byol_loss_func(P[v2], Z_momentum[v1], geometric_loss=self.geometric_loss)
 
         # calculate std of features
         with torch.no_grad():

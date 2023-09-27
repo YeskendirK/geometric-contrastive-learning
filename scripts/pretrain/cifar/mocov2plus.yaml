@@ -17,9 +17,10 @@ backbone:
   name: "resnet18"
 method_kwargs:
   proj_hidden_dim: 2048
-  proj_output_dim: 256
-  queue_size: 32768
-  temperature: 0.2
+  proj_output_dim: 128
+  queue_size: 4096
+  temperature: 0.05
+  geometric_loss: False
 momentum:
   base_tau: 0.99
   final_tau: 0.999
@@ -29,9 +30,10 @@ data:
   val_path: "./datasets"
   format: "image_folder"
   num_workers: 4
+  trainSplit: 'split1_D_i' # cifar100_split1_D_i
 optimizer:
   name: "sgd"
-  batch_size: 256
+  batch_size: 512
   lr: 0.3
   classifier_lr: 0.3
   weight_decay: 1e-4
@@ -50,4 +52,4 @@ devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16
+precision: 32

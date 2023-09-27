@@ -37,13 +37,17 @@ def dataset_args(parser: ArgumentParser):
         "imagenet",
         "imagenet100",
         "custom",
+        "cifar10-LT",
+        "cifar100-LT",
+        "imagenet100-LT",
+        "imagenet10",
     ]
 
     parser.add_argument("--dataset", choices=SUPPORTED_DATASETS, type=str, required=True)
 
     # dataset path
-    parser.add_argument("--train_data_path", type=Path, required=True)
-    parser.add_argument("--val_data_path", type=Path, default=None)
+    parser.add_argument("--train_data_path", type=str, required=True) # type=Path
+    parser.add_argument("--val_data_path", type=str, default=None)
     parser.add_argument(
         "--data_format", default="image_folder", choices=["image_folder", "dali", "h5"]
     )

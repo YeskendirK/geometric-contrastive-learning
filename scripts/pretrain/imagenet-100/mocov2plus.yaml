@@ -17,21 +17,23 @@ backbone:
   name: "resnet18"
 method_kwargs:
   proj_hidden_dim: 2048
-  proj_output_dim: 256
-  queue_size: 65536
-  temperature: 0.2
+  proj_output_dim: 128
+  queue_size: 8192
+  temperature: 0.05
+  geometric_loss: False
 momentum:
   base_tau: 0.99
   final_tau: 0.999
 data:
   dataset: imagenet100
-  train_path: "./datasets/imagenet-100/train"
-  val_path: "./datasets/imagenet-100/val"
-  format: "dali"
+  train_path: "/projects/0/gusr0443/data/imagenet/train"
+  val_path: "/projects/0/gusr0443/data/imagenet/val"
+  format: "image_folder"
   num_workers: 4
+  trainSplit: 'split1_D_i'
 optimizer:
   name: "sgd"
-  batch_size: 128
+  batch_size: 512
   lr: 0.3
   classifier_lr: 0.3
   weight_decay: 1e-4
@@ -46,8 +48,8 @@ auto_resume:
 
 # overwrite PL stuff
 max_epochs: 400
-devices: [0, 1]
+devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16
+precision: 32

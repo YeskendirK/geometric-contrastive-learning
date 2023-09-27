@@ -28,6 +28,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+from .pretrain_dataloader import LT_ImageFolder, CustomCIFAR100, CustomCIFAR10, dataset_with_index
+import numpy as np
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -137,6 +139,10 @@ def prepare_transforms(dataset: str) -> Tuple[nn.Module, nn.Module]:
         "imagenet100": imagenet_pipeline,
         "imagenet": imagenet_pipeline,
         "custom": custom_pipeline,
+        "cifar10-LT": cifar_pipeline,
+        "cifar100-LT": cifar_pipeline,
+        "imagenet100-LT": imagenet_pipeline,
+        "imagenet10": imagenet_pipeline,
     }
 
     assert dataset in pipelines
@@ -157,6 +163,7 @@ def prepare_datasets(
     data_format: Optional[str] = "image_folder",
     download: bool = True,
     data_fraction: float = -1.0,
+    trainSplit: Optional[str] = "split1_D_i",
 ) -> Tuple[Dataset, Dataset]:
     """Prepares train and val datasets.
 
@@ -185,9 +192,15 @@ def prepare_datasets(
         sandbox_folder = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         val_data_path = sandbox_folder / "datasets"
 
-    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "custom"]
+    assert dataset in ["cifar10", "cifar100", "stl10", "imagenet", "imagenet100", "imagenet10", "custom", "cifar10-LT",
+                       "cifar100-LT", "imagenet100-LT"]
 
-    if dataset in ["cifar10", "cifar100"]:
+    if dataset in ["cifar10", "cifar100"]: #, "cifar10-LT", "cifar100-LT"]:
+        # for linear evaluation use standard dataset
+        # if dataset == "cifar10-LT":
+        #     dataset = "cifar10"
+        # elif dataset == "cifar100-LT":
+        #     dataset = "cifar100"
         DatasetClass = vars(torchvision.datasets)[dataset.upper()]
         train_dataset = DatasetClass(
             train_data_path,
@@ -196,6 +209,45 @@ def prepare_datasets(
             transform=T_train,
         )
 
+        val_dataset = DatasetClass(
+            val_data_path,
+            train=False,
+            download=download,
+            transform=T_val,
+        )
+
+    elif dataset == 'cifar10-LT':
+        trainSplit = f'cifar10_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR10
+        train_dataset = DatasetClass(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=T_train,
+        )
+        DatasetClass = torchvision.datasets.CIFAR10
+        val_dataset = DatasetClass(
+            val_data_path,
+            train=False,
+            download=download,
+            transform=T_val,
+        )
+
+    elif dataset == 'cifar100-LT':
+        trainSplit = f'cifar100_imbSub_with_subsets/{trainSplit}.npy'
+        train_idx = list(np.load('./split/{}'.format(trainSplit)))
+        DatasetClass = CustomCIFAR100
+        train_dataset = DatasetClass(
+            train_idx,
+            root=train_data_path,
+            train=True,
+            download=download,
+            transform=T_train,
+        )
+
+        DatasetClass = torchvision.datasets.CIFAR100
         val_dataset = DatasetClass(
             val_data_path,
             train=False,
@@ -217,7 +269,7 @@ def prepare_datasets(
             transform=T_val,
         )
 
-    elif dataset in ["imagenet", "imagenet100", "custom"]:
+    elif dataset in ["imagenet", "imagenet10", "custom"]:
         if data_format == "h5":
             assert _h5_available
             train_dataset = H5Dataset(dataset, train_data_path, T_train)
@@ -225,6 +277,18 @@ def prepare_datasets(
         else:
             train_dataset = ImageFolder(train_data_path, T_train)
             val_dataset = ImageFolder(val_data_path, T_val)
+
+    elif dataset in ["imagenet100", "imagenet100-LT"]:
+        if dataset == "imagenet100":
+            train_txt_file = "split/imagenet-100/ImageNet_100_train.txt"
+            val_txt_file = "split/imagenet-100/ImageNet_100_val.txt"
+        else:
+            train_txt_file = "split/imagenet-100/imageNet_100_LT_train.txt"
+            val_txt_file = "split/imagenet-100/ImageNet_100_val.txt"
+        train_data_root = '/'.join(train_data_path.split('/')[:-1])
+        val_data_root = '/'.join(val_data_path.split('/')[:-1])
+        train_dataset = LT_ImageFolder(txt=train_txt_file, root=train_data_root, transform=T_train)
+        val_dataset = LT_ImageFolder(txt=val_txt_file, root=val_data_root, transform=T_val)
 
     if data_fraction > 0:
         assert data_fraction < 1, "Only use data_fraction for values smaller than 1."
@@ -284,6 +348,7 @@ def prepare_data(
     download: bool = True,
     data_fraction: float = -1.0,
     auto_augment: bool = False,
+    trainSplit: Optional[str] = "split1_D_i",
 ) -> Tuple[DataLoader, DataLoader]:
     """Prepares transformations, creates dataset objects and wraps them in dataloaders.
 
@@ -330,6 +395,7 @@ def prepare_data(
         data_format=data_format,
         download=download,
         data_fraction=data_fraction,
+        trainSplit=trainSplit
     )
     train_loader, val_loader = prepare_dataloaders(
         train_dataset,

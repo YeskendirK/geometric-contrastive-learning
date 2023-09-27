@@ -194,7 +194,7 @@ class BaseMethod(pl.LightningModule):
             self.features_dim: int = self.backbone.inplanes
             # remove fc layer
             self.backbone.fc = nn.Identity()
-            cifar = cfg.data.dataset in ["cifar10", "cifar100"]
+            cifar = cfg.data.dataset in ["cifar10", "cifar100", "cifar10-LT", "cifar100-LT"]
             if cifar:
                 self.backbone.conv1 = nn.Conv2d(
                     3, 64, kernel_size=3, stride=1, padding=2, bias=False
@@ -643,7 +643,7 @@ class BaseMomentumMethod(BaseMethod):
         if self.backbone_name.startswith("resnet"):
             # remove fc layer
             self.momentum_backbone.fc = nn.Identity()
-            cifar = cfg.data.dataset in ["cifar10", "cifar100"]
+            cifar = cfg.data.dataset in ["cifar10", "cifar100", "cifar10-LT", "cifar100-LT"]
             if cifar:
                 self.momentum_backbone.conv1 = nn.Conv2d(
                     3, 64, kernel_size=3, stride=1, padding=2, bias=False

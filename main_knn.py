@@ -32,9 +32,13 @@ from solo.data.classification_dataloader import (
     prepare_dataloaders,
     prepare_datasets,
     prepare_transforms,
+    prepare_data
 )
 from solo.methods import METHODS
 from solo.utils.knn import WeightedKNNClassifier
+
+import hydra
+from omegaconf import DictConfig, OmegaConf
 
 
 @torch.no_grad()
@@ -114,8 +118,13 @@ def run_knn(
 
     return acc1, acc5
 
-
 def main():
+    # hydra doesn't allow us to add new keys for "safety"
+    # set_struct(..., False) disables this behavior and allows us to add more parameters
+    # without making the user specify every single thing about the model
+    # OmegaConf.set_struct(cfg, False)
+    # cfg = parse_cfg(cfg)
+
     args = parse_args_knn()
 
     # build paths
@@ -127,13 +136,24 @@ def main():
     with open(args_path) as f:
         method_args = json.load(f)
 
+    cfg = OmegaConf.create(method_args)
+    model = METHODS[cfg.method](cfg)
+    state = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+    model.load_state_dict(state, strict=False)
+    model.cuda()
+
+
+
+    '''
     # build the model
     model = METHODS[method_args["method"]].load_from_checkpoint(
         ckpt_path, strict=False, **method_args
     )
     model.cuda()
+    '''
 
     # prepare data
+    '''
     _, T = prepare_transforms(args.dataset)
     train_dataset, val_dataset = prepare_datasets(
         args.dataset,
@@ -142,6 +162,7 @@ def main():
         train_data_path=args.train_data_path,
         val_data_path=args.val_data_path,
         data_format=args.data_format,
+        trainSplit=args.trainSplit
     )
     train_loader, val_loader = prepare_dataloaders(
         train_dataset,
@@ -149,6 +170,14 @@ def main():
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
+    '''
+    train_loader, val_loader = prepare_data(args.dataset,
+            train_data_path=args.train_data_path,
+            val_data_path=args.val_data_path,
+            data_format=args.data_format,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            trainSplit=args.trainSplit)
 
     # extract train features
     train_features_bb, train_features_proj, train_targets = extract_features(train_loader, model)

@@ -45,6 +45,7 @@ class MoCoV2Plus(BaseMomentumMethod):
 
         self.temperature: float = cfg.method_kwargs.temperature
         self.queue_size: int = cfg.method_kwargs.queue_size
+        self.geometric_loss: bool = cfg.method_kwargs.geometric_loss
 
         proj_hidden_dim: int = cfg.method_kwargs.proj_hidden_dim
         proj_output_dim: int = cfg.method_kwargs.proj_output_dim
@@ -185,8 +186,8 @@ class MoCoV2Plus(BaseMomentumMethod):
         # symmetric
         queue = self.queue.clone().detach()
         nce_loss = (
-            mocov2plus_loss_func(q1, k2, queue[1], self.temperature)
-            + mocov2plus_loss_func(q2, k1, queue[0], self.temperature)
+            mocov2plus_loss_func(q1, k2, queue[1], self.temperature, self.geometric_loss)
+            + mocov2plus_loss_func(q2, k1, queue[0], self.temperature, self.geometric_loss)
         ) / 2
 
         # ------- update queue -------
