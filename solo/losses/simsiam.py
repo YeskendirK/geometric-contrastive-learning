@@ -19,6 +19,7 @@
 
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 
 def simsiam_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True, geometric_loss: bool = False) -> torch.Tensor:

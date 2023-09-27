@@ -18,7 +18,7 @@ backbone:
 method_kwargs:
   proj_hidden_dim: 4096
   proj_output_dim: 128
-  temperature: 0.2
+  temperature: 0.05
   geometric_loss: False
 data:
   dataset: imagenet10
@@ -52,4 +52,4 @@ devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"
 strategy: "ddp"
-precision: 16
+precision: 32
